@@ -7,11 +7,6 @@ from typing import Callable, Generic, TypeVar
 
 from .context import Context
 
-# This object is used to distinguish a dependency that is missing from the resolved
-# dependencies cache, and an existing dependency with value `None`.
-_MISSING = object()
-
-
 TDep = TypeVar("TDep")
 
 
@@ -34,10 +29,6 @@ class Singleton(Provider[TDep]):
         self._signature = signature(self.factory)
 
     def resolve(self, ctx: Context) -> TDep:
-
-        cached = ctx.container._resolved.get(ctx.self_name, _MISSING)
-        if cached is not _MISSING:
-            return cached  # type: ignore
 
         dependencies = {}
 

@@ -1,9 +1,24 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List
 
 from .context import Context
 from .providers import Provider, Singleton, Value
+
+# This object is used to distinguish a dependency that is missing from the resolved
+# dependencies cache, and an existing dependency with value `None`.
+_MISSING = object()
+
+
+@dataclass
+class ResolutionException(Exception):
+
+    chain: List[str]
+    message: str
+
+    def __str__(self):
+        return f"{self.message}.\nResolution chain: {' -> '.join(reversed(self.chain))}"
 
 
 def _get_provider(value) -> Provider:
@@ -58,5 +73,25 @@ class Container(metaclass=ContainerMetaclass):
     _resolvers: Dict[str, Provider]
 
     def _resolve(self, name: str) -> Any:
+
+        cached = self._resolved.get(name, _MISSING)
+        if cached is not _MISSING:
+            return cached
+
+        resolver = self._resolvers.get(name)
+        if resolver is None:
+            raise ResolutionException(
+                chain=[name], message=f"Missing resolver for name `{name}`"
+            )
+
         ctx = Context(self_name=name, container=self)
-        return self._resolvers[name].resolve(ctx)
+
+        try:
+            resolved = resolver.resolve(ctx)
+        except ResolutionException as rex:
+            rex.chain.append(name)
+            raise rex
+        except Exception as ex:
+            raise
+
+        return resolved
