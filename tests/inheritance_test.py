@@ -67,3 +67,13 @@ def test_multiple_inheritance():
     assert c.inner() is not None
     assert c.inner().value == "567"
     assert c.something() == "something"
+
+
+class OverrideValueContainer(_TestContainer):
+    value = Value("456")
+
+
+def test_provider_inheritance_overriding():
+    c = OverrideValueContainer()
+
+    assert c.value() == "456"
