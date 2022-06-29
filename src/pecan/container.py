@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple, Type
 
 from .context import Context
 from .providers import Provider, Singleton, Value
@@ -32,10 +32,10 @@ def _get_provider(value) -> Provider:
     return Value(value)
 
 
-def _create_init(resolvers: dict):
+def _create_init(cls, resolvers: dict):
     def init(self: Container):
-        self._resolved = {}
-        self._resolvers = resolvers
+        super(cls, self).__init__()
+        self._resolvers.update(resolvers)
 
     return init
 
@@ -48,7 +48,10 @@ def _create_resolver(name):
 
 
 class ContainerMetaclass(type):
-    def __new__(cls, class_name, bases, class_dict):
+    def __new__(cls, class_name, bases: Tuple[Type, ...], class_dict: dict):
+
+        if class_dict["__module__"] == __name__ and class_name == "Container":
+            return super().__new__(cls, class_name, bases, class_dict)
 
         resolvers = {}
 
@@ -60,9 +63,9 @@ class ContainerMetaclass(type):
             resolvers[name] = _get_provider(value)
             class_dict[name] = _create_resolver(name)
 
-        class_dict["__init__"] = _create_init(resolvers)
-
         class_obj = super().__new__(cls, class_name, bases, class_dict)
+
+        setattr(class_obj, "__init__", _create_init(class_obj, resolvers))
 
         return class_obj
 
@@ -71,6 +74,10 @@ class Container(metaclass=ContainerMetaclass):
 
     _resolved: Dict[str, Any]
     _resolvers: Dict[str, Provider]
+
+    def __init__(self):
+        self._resolved = {}
+        self._resolvers = {}
 
     def _resolve(self, name: str) -> Any:
 
@@ -81,7 +88,8 @@ class Container(metaclass=ContainerMetaclass):
         resolver = self._resolvers.get(name)
         if resolver is None:
             raise ResolutionException(
-                chain=[name], message=f"Missing resolver for name `{name}`"
+                chain=[name],
+                message=f"Missing resolver for name `{name}`",
             )
 
         ctx = Context(self_name=name, container=self)
