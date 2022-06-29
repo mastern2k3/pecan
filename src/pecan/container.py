@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from inspect import Signature
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Any, Callable, Dict, List, Tuple, Type, Union
 
 from .providers import Provider, Singleton, Value
 
@@ -33,9 +33,14 @@ def _get_provider(value) -> Provider:
 
 
 def _create_init(cls, resolvers: dict):
-    def init(self: Container):
+    def init(self: Container, override: Dict[str, Union[Provider, Any]] = {}):
+
         super(cls, self).__init__()
+
         self._resolvers.update(resolvers)
+
+        for name, _override in override.items():
+            self._resolvers[name] = _get_provider(_override)
 
     return init
 
@@ -75,11 +80,15 @@ class Container(metaclass=ContainerMetaclass):
     _resolved: Dict[str, Any]
     _resolvers: Dict[str, Provider]
 
-    def __init__(self):
+    def __init__(self, override: Dict[str, Union[Provider, Any]] = {}):
         self._resolved = {}
         self._resolvers = {}
 
-    def _fulfill_factory_signature(self, factory: Callable, signature: Signature) -> Any:
+    def _fulfill_factory_signature(
+        self,
+        factory: Callable,
+        signature: Signature,
+    ) -> Any:
 
         dependencies = {}
 

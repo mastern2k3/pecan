@@ -1,2 +1,2 @@
 from .container import Container, ResolutionException
-from .providers import Singleton, Value, Factory
+from .providers import Factory, Singleton, Value
