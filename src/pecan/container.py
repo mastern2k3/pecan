@@ -100,6 +100,9 @@ class Container(metaclass=ContainerMetaclass):
             rex.chain.append(name)
             raise rex
         except Exception as ex:
-            raise
+            raise ResolutionException(
+                chain=[name],
+                message=f"Exception when trying to resolve name `{name}`",
+            ) from ex
 
         return resolved
