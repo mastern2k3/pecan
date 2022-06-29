@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from inspect import Signature, signature
 from typing import Callable, Generic, TypeVar
 
-from .context import Context
+import pecan
 
 TDep = TypeVar("TDep")
 
@@ -15,7 +15,7 @@ class Provider(ABC, Generic[TDep]):
         ...
 
     @abstractmethod
-    def resolve(self, ctx: Context) -> TDep:
+    def resolve(self, name: str, container: "pecan.Container") -> TDep:
         pass
 
 
@@ -28,16 +28,27 @@ class Singleton(Provider[TDep]):
     def __post_init__(self):
         self._signature = signature(self.factory)
 
-    def resolve(self, ctx: Context) -> TDep:
+    def resolve(self, name: str, container: "pecan.Container") -> TDep:
 
-        dependencies = {}
+        resolved = container._fulfill_factory_signature(self.factory, self._signature)
 
-        for param_name, param in self._signature.parameters.items():
-            dependencies[param_name] = ctx.container._resolve(param_name)
+        container._resolved[name] = resolved
 
-        resolved = self.factory(**dependencies)
+        return resolved
 
-        ctx.container._resolved[ctx.self_name] = resolved
+
+@dataclass
+class Factory(Provider[TDep]):
+
+    factory: Callable[..., TDep]
+    _signature: Signature = field(init=False)
+
+    def __post_init__(self):
+        self._signature = signature(self.factory)
+
+    def resolve(self, name: str, container: "pecan.Container") -> TDep:
+
+        resolved = container._fulfill_factory_signature(self.factory, self._signature)
 
         return resolved
 
@@ -47,5 +58,5 @@ class Value(Provider[TDep]):
 
     value: TDep
 
-    def resolve(self, ctx: Context) -> TDep:
+    def resolve(self, name: str, container: "pecan.Container") -> TDep:
         return self.value

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from pytest import raises
 
-from pecan import Container, Singleton, ResolutionException
+from pecan import Container, ResolutionException, Singleton
 
 
 @dataclass
@@ -26,15 +26,17 @@ def test_missing_provider():
 
 expected_exception = Exception("I'm expected")
 
+
 def _raise_expected_exception():
     raise expected_exception
+
 
 class ErrorProviderContainer(Container):
     value = _raise_expected_exception
     inner = Singleton(Inner)
 
 
-def test_error_while_resolving4():
+def test_error_while_resolving():
 
     c = ErrorProviderContainer()
 

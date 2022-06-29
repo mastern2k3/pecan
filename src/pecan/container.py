@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from inspect import Signature
 from typing import Any, Callable, Dict, List, Tuple, Type
 
-from .context import Context
 from .providers import Provider, Singleton, Value
 
 # This object is used to distinguish a dependency that is missing from the resolved
@@ -79,6 +79,17 @@ class Container(metaclass=ContainerMetaclass):
         self._resolved = {}
         self._resolvers = {}
 
+    def _fulfill_factory_signature(self, factory: Callable, signature: Signature) -> Any:
+
+        dependencies = {}
+
+        for param_name, param in signature.parameters.items():
+            dependencies[param_name] = self._resolve(param_name)
+
+        resolved = factory(**dependencies)
+
+        return resolved
+
     def _resolve(self, name: str) -> Any:
 
         cached = self._resolved.get(name, _MISSING)
@@ -92,10 +103,8 @@ class Container(metaclass=ContainerMetaclass):
                 message=f"Missing resolver for name `{name}`",
             )
 
-        ctx = Context(self_name=name, container=self)
-
         try:
-            resolved = resolver.resolve(ctx)
+            resolved = resolver.resolve(name, self)
         except ResolutionException as rex:
             rex.chain.append(name)
             raise rex
