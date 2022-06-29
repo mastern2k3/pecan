@@ -4,6 +4,19 @@ version = "0.1.0"
 description = ""
 authors = ["Nitzan Zada <nitzan.zada@gmail.com>"]
 readme = "README.md"
+keywords = [
+    "Dependency injection",
+    "DI",
+    "Inversion of Control",
+    "IoC",
+    "Factory",
+    "Singleton",
+    "Design patterns",
+]
+license = "MIT"
+include = [
+    "LICENSE",
+]
 packages = [
     { include = "pecan", from = "src" },
 ]
