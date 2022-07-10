@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pecan"
+name = "uncontained"
 version = "0.1.0"
 description = ""
 authors = ["Nitzan Zada <nitzan.zada@gmail.com>"]
@@ -18,7 +18,7 @@ include = [
     "LICENSE",
 ]
 packages = [
-    { include = "pecan", from = "src" },
+    { include = "uncontained", from = "src" },
 ]
 
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from pecan import Container, Factory, Singleton, Value
+from uncontained import Container, Factory, Singleton, Value
 
 
 @dataclass

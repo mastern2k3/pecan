@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from pytest import raises
 
-from pecan import Container, ResolutionException, Singleton
+from uncontained import Container, ResolutionException, Singleton
 
 
 @dataclass

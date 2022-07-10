@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from inspect import Signature, signature
 from typing import Callable, Generic, TypeVar
 
-import pecan
+import uncontained
 
 TDep = TypeVar("TDep")
 
@@ -15,7 +15,7 @@ class Provider(ABC, Generic[TDep]):
         ...
 
     @abstractmethod
-    def resolve(self, name: str, container: "pecan.Container") -> TDep:
+    def resolve(self, name: str, container: "uncontained.Container") -> TDep:
         pass
 
 
@@ -28,7 +28,7 @@ class Singleton(Provider[TDep]):
     def __post_init__(self):
         self._signature = signature(self.factory)
 
-    def resolve(self, name: str, container: "pecan.Container") -> TDep:
+    def resolve(self, name: str, container: "uncontained.Container") -> TDep:
 
         resolved = container._fulfill_factory_signature(self.factory, self._signature)
 
@@ -46,7 +46,7 @@ class Factory(Provider[TDep]):
     def __post_init__(self):
         self._signature = signature(self.factory)
 
-    def resolve(self, name: str, container: "pecan.Container") -> TDep:
+    def resolve(self, name: str, container: "uncontained.Container") -> TDep:
 
         resolved = container._fulfill_factory_signature(self.factory, self._signature)
 
@@ -58,5 +58,5 @@ class Value(Provider[TDep]):
 
     value: TDep
 
-    def resolve(self, name: str, container: "pecan.Container") -> TDep:
+    def resolve(self, name: str, container: "uncontained.Container") -> TDep:
         return self.value
